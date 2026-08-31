@@ -1,0 +1,50 @@
+# Подключение к уже работающему DataLens OSS (docker compose).
+# Сеть DataLens не создаём и его compose не правим.
+#
+#   cp env.example .env   # заполнить токены
+#   docker compose up -d --build
+#
+# Имя сети: docker network ls  →  DATALENS_NETWORK (часто datalens_default).
+
+services:
+  datalens-api:
+    build: ./datalens-api
+    container_name: datalens-api
+    environment:
+      DL_API_TOKEN: ${DL_API_TOKEN}
+      US_MASTER_TOKEN: ${US_MASTER_TOKEN}
+      US_HOST: ${US_HOST:-http://us:8080}
+      CONTROL_API_HOST: ${CONTROL_API_HOST:-http://control-api:8080}
+      META_MANAGER_HOST: ${META_MANAGER_HOST:-http://meta-manager:8080}
+      UI_API_HOST: ${UI_API_HOST:-http://ui-api:8080}
+      AUTH_HOST: ${AUTH_HOST:-http://auth:8080}
+      AUTH_LOGIN: ${AUTH_LOGIN}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      DATALENS_API_PORT: ${DATALENS_API_PORT:-8393}
+      DATALENS_API_VERSION_DEFAULT: ${DATALENS_API_VERSION_DEFAULT:-2}
+      US_TENANT_ID: ${US_TENANT_ID:-common}
+    ports:
+      - "${DATALENS_API_PORT:-8393}:${DATALENS_API_PORT:-8393}"
+    networks:
+      - datalens
+
+  datalens-mcp:
+    build: ./datalens-mcp
+    container_name: datalens-mcp
+    environment:
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN}
+      DL_API_TOKEN: ${DL_API_TOKEN}
+      DATALENS_API_HOST: http://datalens-api:${DATALENS_API_PORT:-8393}
+      DATALENS_MCP_PORT: ${DATALENS_MCP_PORT:-8394}
+      DATALENS_API_VERSION: ${DATALENS_API_VERSION:-2}
+    ports:
+      - "${DATALENS_MCP_PORT:-8394}:${DATALENS_MCP_PORT:-8394}"
+    depends_on:
+      - datalens-api
+    networks:
+      - datalens
+
+networks:
+  datalens:
+    external: true
+    name: ${DATALENS_NETWORK:-datalens_default}

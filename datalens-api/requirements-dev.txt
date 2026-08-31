@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==8.4.1
+pytest-asyncio==1.1.0
+respx==0.22.0
+jsonschema==4.25.0
+datamodel-code-generator==0.32.0
