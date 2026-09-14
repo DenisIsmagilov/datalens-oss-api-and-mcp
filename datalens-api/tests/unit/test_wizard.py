@@ -85,7 +85,8 @@ def test_create_wizard_chart_posts_widget_entry():
     assert sent["type"] == "graph_wizard_node"
     assert sent["workbookId"] == WORKBOOK_ID
     assert sent["name"] == "demo-wizard"
-    assert sent["data"] == {"shared": {"title": "demo"}}
+    assert isinstance(sent["data"]["shared"], str)
+    assert json.loads(sent["data"]["shared"]) == {"title": "demo"}
 
 
 @respx.mock
@@ -167,7 +168,8 @@ def test_create_wizard_chart_derives_table_type_from_flat_table():
     assert response.json()["type"] == "table_wizard_node"
     sent = json.loads(route.calls[0].request.content)
     assert sent["type"] == "table_wizard_node"
-    assert sent["data"]["shared"]["visualization"]["id"] == "flatTable"
+    assert isinstance(sent["data"]["shared"], str)
+    assert json.loads(sent["data"]["shared"])["visualization"]["id"] == "flatTable"
 
 
 @respx.mock
@@ -188,6 +190,27 @@ def test_create_wizard_chart_accepts_table_alias():
     assert response.status_code == 200, response.text
     sent = json.loads(route.calls[0].request.content)
     assert sent["type"] == "table_wizard_node"
+    assert isinstance(sent["data"]["shared"], str)
+
+
+@respx.mock
+def test_create_wizard_chart_keeps_shared_json_string():
+    already = json.dumps({"title": "as-string"}, ensure_ascii=False)
+    route = respx.post(f"{US_HOST}/private/entries").mock(
+        return_value=httpx.Response(200, json=US_ENTRY)
+    )
+    response = _rpc(
+        "createWizardChart",
+        {
+            "workbookId": WORKBOOK_ID,
+            "name": "demo-string-shared",
+            "template": "datalens",
+            "data": {"shared": already},
+        },
+    )
+    assert response.status_code == 200, response.text
+    sent = json.loads(route.calls[0].request.content)
+    assert sent["data"]["shared"] == already
 
 
 @respx.mock
@@ -212,7 +235,8 @@ def test_update_wizard_chart_posts_mode_and_data():
     assert response.json()["entryId"] == CHART_ID
     sent = json.loads(route.calls[0].request.content)
     assert sent["mode"] == "publish"
-    assert sent["data"] == {"shared": {"title": "upd"}}
+    assert isinstance(sent["data"]["shared"], str)
+    assert json.loads(sent["data"]["shared"]) == {"title": "upd"}
     assert "type" not in sent
 
 

@@ -42,6 +42,17 @@ def resolve_wizard_entry_type(data: Any) -> str:
     return GRAPH_ENTRY_TYPE
 
 
+def encode_chart_data_for_us(data: Any) -> Any:
+    if not isinstance(data, dict):
+        return data
+    shared = data.get("shared")
+    if not isinstance(shared, dict):
+        return data
+    encoded = dict(data)
+    encoded["shared"] = json.dumps(shared, ensure_ascii=False, indent=4)
+    return encoded
+
+
 def assert_wizard_type_compatible(entry_type: str, data: Any) -> None:
     vis_id = extract_visualization_id(data)
     if vis_id is None:

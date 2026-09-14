@@ -7,6 +7,7 @@ from app.wizard_type import (
     GRAPH_ENTRY_TYPE,
     TABLE_ENTRY_TYPE,
     assert_wizard_type_compatible,
+    encode_chart_data_for_us,
     extract_visualization_id,
     resolve_wizard_entry_type,
 )
@@ -85,3 +86,22 @@ def test_assert_allows_matching_families():
         TABLE_ENTRY_TYPE,
         {"shared": {"visualization": {"id": "flatTable"}}},
     )
+
+
+def test_encode_chart_data_for_us_stringifies_shared_object():
+    data = {"shared": {"title": "демо", "visualization": {"id": "flatTable"}}}
+    encoded = encode_chart_data_for_us(data)
+    assert isinstance(encoded["shared"], str)
+    assert json.loads(encoded["shared"]) == data["shared"]
+    assert data["shared"] == {"title": "демо", "visualization": {"id": "flatTable"}}
+
+
+def test_encode_chart_data_for_us_keeps_existing_string():
+    raw = json.dumps({"title": "already"}, ensure_ascii=False)
+    encoded = encode_chart_data_for_us({"shared": raw})
+    assert encoded["shared"] == raw
+
+
+def test_encode_chart_data_for_us_passthrough_without_shared():
+    assert encode_chart_data_for_us({"other": 1}) == {"other": 1}
+    assert encode_chart_data_for_us(None) is None

@@ -28,6 +28,8 @@
 
 **Создание, shortcuts (3):** `create_dashboard` → `createDashboard`; `create_wizard_chart` → `createWizardChart`; `create_ql_chart` → `createQLChart`.
 
+`create_wizard_chart`: US `type` по `data.shared.visualization.id` — `flatTable` / `pivotTable` / `table` → `table_wizard_node`, иначе `graph_wizard_node`. В US `shared` пишется **JSON-строкой** (как UI); агент может слать object. Смена семейства vis на `updateWizardChart` (`call_rpc`) → `400 INVALID_ARGUMENT`.
+
 Update/delete чартов и дашбордов — только `call_rpc`.
 
 ## Cursor

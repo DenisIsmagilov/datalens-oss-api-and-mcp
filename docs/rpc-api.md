@@ -29,6 +29,8 @@
 
 **Dashboard / Wizard / QL:** `createDashboard`, `getDashboard`, `updateDashboard`, `deleteDashboard`, `createWizardChart`, `getWizardChart`, `updateWizardChart`, `deleteWizardChart`, `createQLChart`, `getQLChart`, `updateQLChart`, `deleteQLChart`
 
+`createWizardChart`: `visualization.id` ∈ {`flatTable`, `pivotTable`, `table`} → US `table_wizard_node`, иначе `graph_wizard_node`. На create/update `data.shared` в US уходит JSON-строкой (UI `/wizard` иначе не открывает чарт). `updateWizardChart` при смене семейства vis → `400 INVALID_ARGUMENT`, type не меняет.
+
 **Transfer:** `startWorkbookExport`, `getWorkbookExportStatus`, `getWorkbookExportResult`, `cancelWorkbookExport`, `startWorkbookImport`, `getWorkbookImportStatus`
 
 Неизвестное имя метода → `404 NOT_FOUND`. Неверный Bearer → `401`.

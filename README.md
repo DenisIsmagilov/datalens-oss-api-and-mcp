@@ -6,6 +6,8 @@
 
 Проверено на DataLens OSS **v2.9.0** (compose: сервисы `us`, `auth`, `control-api`, `meta-manager`). Другие версии не обещаем.
 
+**0.2.0:** `createWizardChart` с `visualization.id=flatTable` создаёт `table_wizard_node` и пишет `data.shared` JSON-строкой, чтобы чарт открывался в UI `/wizard`. Подробности — [CHANGELOG.md](CHANGELOG.md).
+
 ## Что внутри
 
 | Каталог | Назначение | Порт по умолчанию |
@@ -56,3 +58,4 @@ MCP для Cursor: `http://127.0.0.1:8394/mcp`, заголовок `Authorizatio
 - [MCP](docs/mcp.md)
 - [Безопасность](docs/security.md)
 - [Ошибки](docs/errors.md)
+- [Changelog](CHANGELOG.md)

@@ -11,7 +11,11 @@ from app.models.generated import (
     UpdateWizardChartArgs,
 )
 from app.models.rpc_bi import ChartResult, EmptyResult
-from app.wizard_type import assert_wizard_type_compatible, resolve_wizard_entry_type
+from app.wizard_type import (
+    assert_wizard_type_compatible,
+    encode_chart_data_for_us,
+    resolve_wizard_entry_type,
+)
 
 
 async def _us_private(
@@ -28,7 +32,7 @@ def _location_payload(payload: dict) -> dict[str, Any]:
     body: dict[str, Any] = {
         "scope": "widget",
         "type": resolve_wizard_entry_type(payload.get("data")),
-        "data": payload["data"],
+        "data": encode_chart_data_for_us(payload["data"]),
     }
     for key in ("workbookId", "name", "key", "meta", "annotation"):
         if key in payload:
@@ -83,7 +87,7 @@ async def update_wizard_chart(
     assert_wizard_type_compatible(current_type, payload["data"])
     body: dict[str, Any] = {
         "mode": payload["mode"],
-        "data": payload["data"],
+        "data": encode_chart_data_for_us(payload["data"]),
     }
     if "annotation" in payload:
         body["annotation"] = payload["annotation"]
