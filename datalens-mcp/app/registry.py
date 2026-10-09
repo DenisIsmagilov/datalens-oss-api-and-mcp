@@ -33,6 +33,41 @@ CREATE_TOOLS: dict[str, str] = {
     "create_ql_chart": "createQLChart",
 }
 
+DATA_TOOLS: dict[str, str] = {
+    "query_dataset": "queryDataset",
+    "get_dataset_field_values": "getDatasetFieldValues",
+    "get_chart_data": "getChartData",
+}
+
+DATA_TOOL_DESCRIPTIONS: dict[str, str] = {
+    "query_dataset": (
+        "Read-only aggregated query against a dataset. Args: datasetId; fields "
+        "(1–30 field titles or ids; measures aggregate, dimensions group); "
+        "calculatedFields [{title, formula}] (DataLens formula syntax, max 10); "
+        "filters [{field, op, values}] with op one of eq, ne, gt, gte, lt, lte, "
+        "in, nin, between, contains, icontains, startswith, isnull, isnotnull "
+        "(isnull/isnotnull: no values; between: 2; in/nin: ≥1; others: 1); "
+        "orderBy [{field, direction asc|desc}]; limit (default 100, max 500). "
+        "Returns {columns[{title,dataType}], rows, rowCount, truncated}. "
+        "Use get_dataset to discover available fields."
+    ),
+    "get_dataset_field_values": (
+        "Distinct values or min/max for a dataset field. Args: datasetId, field; "
+        "mode=distinct (optional case-insensitive search substring; limit default "
+        "100, max 200) or mode=range (min/max); optional filters as in "
+        "query_dataset. Returns {field, values, truncated} or {field, min, max}."
+    ),
+    "get_chart_data": (
+        "Data for an existing chart as a uniform table. Args: chartId; params "
+        "(dashboard/chart parameters as {name: value or [values]}). Returns "
+        "{chartId, title, visualization, datasetIds, columns, rows, rowCount, "
+        "truncated, normalized, note}. Tables, metrics, and line/area/column/bar "
+        "charts are normalized (charts as long table x/series/value); other "
+        "visualizations set normalized=false with a note — use query_dataset on "
+        "datasetIds instead."
+    ),
+}
+
 
 def _rpc_path_to_method(path: str) -> str:
     return path.removeprefix("/rpc/")

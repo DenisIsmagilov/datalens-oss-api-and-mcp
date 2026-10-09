@@ -3,6 +3,8 @@ from mcp.server.fastmcp import FastMCP
 from app.config import get_settings
 from app.registry import (
     CREATE_TOOLS,
+    DATA_TOOL_DESCRIPTIONS,
+    DATA_TOOLS,
     READ_TOOLS,
     handle_call_rpc,
     handle_list_rpc_methods,
@@ -24,6 +26,15 @@ def register_create_tools(mcp: FastMCP) -> None:
             _make_rpc_handler(rpc_name),
             name=tool_name,
             description=f"Side-effect: creates resource via datalens-api RPC {rpc_name}",
+        )
+
+
+def register_data_tools(mcp: FastMCP) -> None:
+    for tool_name, rpc_name in DATA_TOOLS.items():
+        mcp.add_tool(
+            _make_rpc_handler(rpc_name),
+            name=tool_name,
+            description=DATA_TOOL_DESCRIPTIONS[tool_name],
         )
 
 
@@ -53,5 +64,6 @@ def build_mcp() -> FastMCP:
 
     register_read_tools(mcp)
     register_create_tools(mcp)
+    register_data_tools(mcp)
 
     return mcp

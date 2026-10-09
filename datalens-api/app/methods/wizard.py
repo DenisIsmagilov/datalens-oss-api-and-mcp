@@ -11,6 +11,7 @@ from app.models.generated import (
     UpdateWizardChartArgs,
 )
 from app.models.rpc_bi import ChartResult, EmptyResult
+from app.us_entries import create_and_publish_entry
 from app.wizard_type import (
     assert_wizard_type_compatible,
     encode_chart_data_for_us,
@@ -58,9 +59,7 @@ def _get_us_params(payload: dict) -> dict[str, Any]:
 async def create_wizard_chart(
     args: CreateWizardChartArgs, _ctx: AuthContext
 ) -> ChartResult:
-    raw = await _us_private(
-        "POST", "/private/entries", json=_location_payload(dump_model(args))
-    )
+    raw = await create_and_publish_entry(_location_payload(dump_model(args)))
     return ChartResult.model_validate(entry_to_chart(raw))
 
 

@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt requirements-dev.txt pytest.ini ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+COPY app ./app
+COPY formula-docs ./formula-docs
+COPY scripts ./scripts
+COPY packs /app/packs
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app

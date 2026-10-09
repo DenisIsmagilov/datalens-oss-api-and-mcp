@@ -1,3 +1,5 @@
+import re
+
 from pydantic import ValidationError
 
 from app.adapters.connection import empty_to_cloud
@@ -12,7 +14,19 @@ from app.models.rpc_bi import (
     GetDatasetArgs,
     UpdateDatasetArgs,
     ValidateDatasetArgs,
+    ValidateDatasetFormulaArgs,
+    ValidateDatasetFormulaResult,
 )
+
+
+_DB_CALL = re.compile(r"\bDB_CALL_\w*", re.IGNORECASE)
+
+
+def _field_valid(raw: dict) -> bool:
+    field = raw.get("field")
+    if isinstance(field, dict) and "valid" in field:
+        return bool(field.get("valid"))
+    return bool(raw.get("valid"))
 
 
 def _dump_create(args: DatasetCreate) -> dict:
@@ -147,3 +161,38 @@ async def validate_dataset(
                 ) from validation_exc
         raise
     return _as_dataset_read(raw, dataset_id=args.datasetId)
+
+
+async def validate_dataset_formula(
+    args: ValidateDatasetFormulaArgs, _ctx: AuthContext
+) -> ValidateDatasetFormulaResult:
+    if _DB_CALL.search(args.formula):
+        raise ApiError(
+            400,
+            "INVALID_ARGUMENT",
+            "DB_CALL_* functions are not allowed",
+            {"formula": args.formula[:200]},
+        )
+    client = await get_control_api_client()
+    try:
+        raw = await client.request(
+            "POST",
+            f"/api/v1/datasets/{args.datasetId}/versions/draft/validators/field",
+            json={
+                "field": {
+                    "title": "formula",
+                    "calc_mode": "formula",
+                    "formula": args.formula,
+                }
+            },
+        )
+    except ApiError as exc:
+        if exc.status_code == 400:
+            raise
+        raise
+    if not isinstance(raw, dict) or not _field_valid(raw):
+        message = ""
+        if isinstance(raw, dict):
+            message = str(raw.get("message") or raw.get("code") or "formula was rejected")
+        raise ApiError(400, "INVALID_ARGUMENT", message or "formula was rejected")
+    return ValidateDatasetFormulaResult(valid=True)

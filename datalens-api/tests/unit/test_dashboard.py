@@ -157,8 +157,12 @@ def _rpc(method: str, payload: dict) -> httpx.Response:
 
 @respx.mock
 def test_create_dashboard_posts_private_entries():
-    route = respx.post(f"{US_HOST}/private/entries").mock(
+    create_route = respx.post(f"{US_HOST}/private/entries").mock(
         return_value=httpx.Response(200, json=US_CREATE)
+    )
+    published = {**US_CREATE, "publishedId": REV_ID}
+    publish_route = respx.post(f"{US_HOST}/private/entries/{DASH_ID}").mock(
+        return_value=httpx.Response(200, json=published)
     )
     response = _rpc("createDashboard", CREATE_ARGS)
     assert response.status_code == 200, response.text
@@ -169,17 +173,22 @@ def test_create_dashboard_posts_private_entries():
     assert entry["type"] == ""
     assert entry["version"] == 1
     assert entry["createdBy"] == "uid:systemId"
+    assert entry["publishedId"] == REV_ID
     assert entry["data"]["settings"]["silentLoading"] is False
     assert entry["data"]["settings"]["dependentSelectors"] is False
     assert entry["data"]["settings"]["expandTOC"] is False
     assert "permissions" not in body
-    assert route.called
-    sent = json.loads(route.calls[0].request.content)
+    assert create_route.called
+    sent = json.loads(create_route.calls[0].request.content)
     assert sent["scope"] == "dash"
     assert sent["type"] == ""
     assert sent["workbookId"] == WORKBOOK_ID
     assert sent["name"] == "demo-dash"
     assert sent["data"]["schemeVersion"] == 8
+    assert publish_route.called
+    published_body = json.loads(publish_route.calls[0].request.content)
+    assert published_body["mode"] == "publish"
+    assert published_body["data"] == sent["data"]
     from app.models.generated import GetDashboardV1Result
 
     GetDashboardV1Result.model_validate(body)

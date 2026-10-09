@@ -1,0 +1,1 @@
+{"datasets": [{"entryId": "ds-demo", "name": "Демо продажи", "fields": [{"title": "Дата", "guid": "dt", "type": "DIMENSION"}]}]}

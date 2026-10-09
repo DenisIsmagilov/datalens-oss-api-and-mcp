@@ -60,19 +60,28 @@ def _rpc(method: str, payload: dict) -> httpx.Response:
 
 @respx.mock
 def test_create_ql_chart_posts_widget_entry():
-    route = respx.post(f"{US_HOST}/private/entries").mock(
+    create_route = respx.post(f"{US_HOST}/private/entries").mock(
         return_value=httpx.Response(200, json=US_ENTRY)
+    )
+    published = {**US_ENTRY, "publishedId": REV_ID}
+    publish_route = respx.post(f"{US_HOST}/private/entries/{CHART_ID}").mock(
+        return_value=httpx.Response(200, json=published)
     )
     response = _rpc("createQLChart", CREATE_ARGS)
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["entryId"] == CHART_ID
     assert body["type"] == "ql"
+    assert body["publishedId"] == REV_ID
     assert "unversionedData" not in body
-    sent = json.loads(route.calls[0].request.content)
+    sent = json.loads(create_route.calls[0].request.content)
     assert sent["scope"] == "widget"
     assert sent["type"] == "ql"
     assert sent["name"] == "demo-ql"
+    assert publish_route.called
+    published_body = json.loads(publish_route.calls[0].request.content)
+    assert published_body["mode"] == "publish"
+    assert published_body["data"] == sent["data"]
 
 
 @respx.mock

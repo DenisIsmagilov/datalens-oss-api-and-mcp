@@ -1,0 +1,3 @@
+formula-docs/*
+!formula-docs/SOURCE.md
+!formula-docs/_field-ref.md

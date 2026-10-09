@@ -1,0 +1,13 @@
+synonyms:
+  свободный остаток:
+    - available_amount
+business_rules:
+  - правило демо
+intents:
+  demo_sales:
+    description: продажи на маркетплейсах
+    triggers:
+      - продажи на маркетплейсах
+    dataset_id: ds-demo
+    table: secret_table
+    sql_hint: SELECT 1

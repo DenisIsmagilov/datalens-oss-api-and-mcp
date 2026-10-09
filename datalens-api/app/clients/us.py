@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import httpx
 
+from app.clients.auth import with_token_retry
 from app.config import get_settings
+from app.request_context import current_request_id
 from app.errors import ApiError, raise_from_us
 
 
@@ -25,7 +26,7 @@ class UsClient:
         headers: dict[str, str] | None = None,
         trace_id: str | None = None,
     ) -> Any:
-        request_id = trace_id or str(uuid.uuid4())
+        request_id = trace_id or current_request_id()
         merged_headers = {
             "x-us-master-token": self._master_token,
             "x-dl-tenant-id": self._tenant_id,
@@ -65,3 +66,21 @@ def _drop_none(params: dict[str, Any] | None) -> dict[str, Any] | None:
     if params is None:
         return None
     return {k: v for k, v in params.items() if v is not None}
+
+
+async def us_public_request(
+    method: str,
+    path: str,
+    *,
+    params: dict[str, Any] | None = None,
+    json: Any = None,
+) -> Any:
+    return await with_token_retry(
+        lambda token: get_us_client().request(
+            method,
+            path,
+            params=params,
+            json=json,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    )

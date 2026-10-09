@@ -1,63 +1,91 @@
 # RPC API
 
-Эндпоинт: `POST /rpc/<method>`. Контракт близок к облачному DataLens API 2.
+Вызов: `POST /rpc/<method>`.
 
-## Заголовки
+Заголовки: `Authorization: Bearer <DL_API_TOKEN>`, `x-dl-api-version: 2`, `Content-Type: application/json`.
 
-| Заголовок | Значение |
-|---|---|
-| `Authorization` | `Bearer <DL_API_TOKEN>` |
-| `Content-Type` | `application/json` |
-| `x-dl-api-version` | `2` (или `latest` → `2`) |
+Базовый адрес на этой машине: `http://127.0.0.1:8393`.
 
-`x-dl-org-id` можно не передавать (OSS single-tenant).
+Список методов снят с регистрации в коде (`datalens-api/app/methods/__init__.py`):
 
-Служебные:
-
-- `GET /health` → `{"status":"ok"}`
-- `GET /json/` — OpenAPI только **реализованных** методов
-
-## Реализованные методы (57)
-
-**Collection:** `createCollection`, `getCollection`, `updateCollection`, `deleteCollection`, `deleteCollections`, `moveCollection`, `moveCollections`, `getCollectionsByIds`, `getCollectionContent`, `getCollectionBreadcrumbs`, `getRootCollectionPermissions`
-
-**Workbook:** `createWorkbook`, `getWorkbook`, `updateWorkbook`, `deleteWorkbook`, `deleteWorkbooks`, `moveWorkbook`, `moveWorkbooks`, `getWorkbooksList`, `getWorkbooksByIds`, `getWorkbookEntries`
-
-**Entries / navigation / folder:** `getEntries`, `listDirectory`, `getEntriesRelations`, `getEntriesPermissions`, `renameEntry`, `createFolder`, `deleteFolder`, `moveFolderEntry`, `getPermissions`
-
-**Connection / Dataset:** `createConnection`, `getConnection`, `updateConnection`, `deleteConnection`, `createDataset`, `getDataset`, `updateDataset`, `deleteDataset`, `validateDataset`
-
-**Dashboard / Wizard / QL:** `createDashboard`, `getDashboard`, `updateDashboard`, `deleteDashboard`, `createWizardChart`, `getWizardChart`, `updateWizardChart`, `deleteWizardChart`, `createQLChart`, `getQLChart`, `updateQLChart`, `deleteQLChart`
-
-`createWizardChart`: `visualization.id` ∈ {`flatTable`, `pivotTable`, `table`} → US `table_wizard_node`, иначе `graph_wizard_node`. На create/update `data.shared` в US уходит JSON-строкой (UI `/wizard` иначе не открывает чарт). `updateWizardChart` при смене семейства vis → `400 INVALID_ARGUMENT`, type не меняет.
-
-**Transfer:** `startWorkbookExport`, `getWorkbookExportStatus`, `getWorkbookExportResult`, `cancelWorkbookExport`, `startWorkbookImport`, `getWorkbookImportStatus`
-
-Неизвестное имя метода → `404 NOT_FOUND`. Неверный Bearer → `401`.
+- `createCollection`
+- `getCollection`
+- `updateCollection`
+- `deleteCollection`
+- `deleteCollections`
+- `moveCollection`
+- `moveCollections`
+- `getCollectionsByIds`
+- `getCollectionContent`
+- `getCollectionBreadcrumbs`
+- `getRootCollectionPermissions`
+- `getWorkbooksList`
+- `createWorkbook`
+- `getWorkbook`
+- `updateWorkbook`
+- `deleteWorkbook`
+- `deleteWorkbooks`
+- `moveWorkbook`
+- `moveWorkbooks`
+- `getWorkbooksByIds`
+- `getWorkbookEntries`
+- `getEntriesRelations`
+- `renameEntry`
+- `getEntriesPermissions`
+- `getEntries`
+- `listDirectory`
+- `createFolder`
+- `deleteFolder`
+- `moveFolderEntry`
+- `getPermissions`
+- `createConnection`
+- `getConnection`
+- `updateConnection`
+- `deleteConnection`
+- `createDataset`
+- `getDataset`
+- `updateDataset`
+- `deleteDataset`
+- `validateDataset`
+- `validateDatasetFormula`
+- `createDashboard`
+- `getDashboard`
+- `updateDashboard`
+- `deleteDashboard`
+- `createWizardChart`
+- `getWizardChart`
+- `updateWizardChart`
+- `deleteWizardChart`
+- `createQLChart`
+- `getQLChart`
+- `updateQLChart`
+- `deleteQLChart`
+- `startWorkbookExport`
+- `getWorkbookExportStatus`
+- `getWorkbookExportResult`
+- `cancelWorkbookExport`
+- `startWorkbookImport`
+- `getWorkbookImportStatus`
+- `queryDataset`
+- `getDatasetFieldValues`
+- `getChartData`
 
 ## Примеры
 
+Оба вызова — методы чтения из списка выше. В теле нет секретов: `workbookId` замените на свой.
+
 ```bash
-# список воркбуков (page 0-based)
-curl -X POST "http://127.0.0.1:8393/rpc/getWorkbooksList" \
-  -H "Authorization: Bearer ${DL_API_TOKEN}" \
+curl -sS http://127.0.0.1:8393/rpc/getWorkbook \
+  -H "Authorization: Bearer <DL_API_TOKEN>" \
   -H "x-dl-api-version: 2" \
   -H "Content-Type: application/json" \
-  -d '{"page":0,"pageSize":10}'
-
-# воркбук по id
-curl -X POST "http://127.0.0.1:8393/rpc/getWorkbook" \
-  -H "Authorization: Bearer ${DL_API_TOKEN}" \
-  -H "x-dl-api-version: 2" \
-  -H "Content-Type: application/json" \
-  -d '{"workbookId":"'"${WORKBOOK_ID}"'"}'
-
-# датасет
-curl -X POST "http://127.0.0.1:8393/rpc/getDataset" \
-  -H "Authorization: Bearer ${DL_API_TOKEN}" \
-  -H "x-dl-api-version: 2" \
-  -H "Content-Type: application/json" \
-  -d '{"datasetId":"'"${DATASET_ID}"'"}'
+  -d '{"workbookId":"change-me"}'
 ```
 
-В примерах нет реальных токенов. `DL_API_TOKEN` берите из своего `.env`.
+```bash
+curl -sS http://127.0.0.1:8393/rpc/getWorkbookEntries \
+  -H "Authorization: Bearer <DL_API_TOKEN>" \
+  -H "x-dl-api-version: 2" \
+  -H "Content-Type: application/json" \
+  -d '{"workbookId":"change-me"}'
+```

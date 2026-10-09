@@ -89,12 +89,12 @@ def test_unhandled_exception_cloud_format():
 
     @app.get("/boom")
     def boom() -> None:
-        raise RuntimeError("unexpected")
+        raise RuntimeError("unexpected secret detail")
 
     response = TestClient(app, raise_server_exceptions=False).get("/boom")
     assert response.status_code == 500
     assert response.json() == {
         "code": "INTERNAL",
-        "message": "unexpected",
+        "message": "Internal error",
         "details": {},
     }

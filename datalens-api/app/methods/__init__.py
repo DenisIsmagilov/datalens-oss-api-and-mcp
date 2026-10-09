@@ -15,6 +15,7 @@ from app.methods.collection import (
     move_collections,
     update_collection,
 )
+from app.methods.data import get_chart_data, get_dataset_field_values, query_dataset
 from app.methods.connection import (
     create_connection,
     delete_connection,
@@ -33,6 +34,7 @@ from app.methods.dataset import (
     get_dataset,
     update_dataset,
     validate_dataset,
+    validate_dataset_formula,
 )
 from app.methods.entries import (
     get_entries_permissions,
@@ -164,6 +166,14 @@ from app.models.generated import (
     UpdateWorkbookArgs,
     Workbook,
 )
+from app.models.rpc_data import (
+    GetChartDataArgs,
+    GetChartDataResult,
+    GetDatasetFieldValuesArgs,
+    GetDatasetFieldValuesResult,
+    QueryDatasetArgs,
+    QueryDatasetResult,
+)
 from app.models.rpc_bi import (
     ChartResult,
     DeleteConnectionArgs,
@@ -174,6 +184,8 @@ from app.models.rpc_bi import (
     UpdateConnectionArgs,
     UpdateDatasetArgs,
     ValidateDatasetArgs,
+    ValidateDatasetFormulaArgs,
+    ValidateDatasetFormulaResult,
 )
 from app.registry import register_rpc
 
@@ -454,6 +466,13 @@ def register_all(app: FastAPI) -> None:
     )
     register_rpc(
         app,
+        "validateDatasetFormula",
+        ValidateDatasetFormulaArgs,
+        ValidateDatasetFormulaResult,
+        validate_dataset_formula,
+    )
+    register_rpc(
+        app,
         "createDashboard",
         CreateDashboardV1Args,
         GetDashboardV1Result,
@@ -578,3 +597,12 @@ def register_all(app: FastAPI) -> None:
         GetWorkbookImportStatusResult,
         get_workbook_import_status,
     )
+    register_rpc(app, "queryDataset", QueryDatasetArgs, QueryDatasetResult, query_dataset)
+    register_rpc(
+        app,
+        "getDatasetFieldValues",
+        GetDatasetFieldValuesArgs,
+        GetDatasetFieldValuesResult,
+        get_dataset_field_values,
+    )
+    register_rpc(app, "getChartData", GetChartDataArgs, GetChartDataResult, get_chart_data)

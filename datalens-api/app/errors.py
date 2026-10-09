@@ -52,6 +52,21 @@ def _cloud_error_body(code: str, message: str, details: dict | None = None) -> d
     }
 
 
+def internal_error_response(_exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content=_cloud_error_body("INTERNAL", "Internal error"),
+    )
+
+
+def _public_validation_errors(exc: RequestValidationError) -> list[dict]:
+    # ctx может содержать объект исключения (не сериализуется), input — значения фильтров
+    return [
+        {key: value for key, value in error.items() if key not in ("ctx", "input", "url")}
+        for error in exc.errors()
+    ]
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def _api_error(_request: Request, exc: ApiError) -> JSONResponse:
@@ -69,13 +84,10 @@ def register_exception_handlers(app: FastAPI) -> None:
             content=_cloud_error_body(
                 "INVALID_ARGUMENT",
                 "Invalid request",
-                {"errors": exc.errors()},
+                {"errors": _public_validation_errors(exc)},
             ),
         )
 
     @app.exception_handler(Exception)
     async def _unhandled(_request: Request, exc: Exception) -> JSONResponse:
-        return JSONResponse(
-            status_code=500,
-            content=_cloud_error_body("INTERNAL", str(exc) or "Internal error"),
-        )
+        return internal_error_response(exc)

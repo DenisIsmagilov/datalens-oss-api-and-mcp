@@ -18,7 +18,7 @@ def _api_headers() -> dict[str, str]:
 def _get_client() -> httpx.AsyncClient:
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(timeout=60.0)
+        _client = httpx.AsyncClient(timeout=get_settings().datalens_api_timeout_sec)
     return _client
 
 

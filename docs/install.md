@@ -1,68 +1,44 @@
-# Установка на уже работающий DataLens
+# Установка
 
-Нужен DataLens OSS **2.9.0**, запущенный через docker compose (сервисы `us`, `auth`, `control-api`, `meta-manager` в одной сети). Свой compose DataLens не меняйте.
+Нужен уже запущенный DataLens OSS 2.9.0. Этот репозиторий его compose не правит и свою сеть не создаёт: контейнеры входят в существующую docker-сеть.
 
-## 1. Сеть
+## Сеть
 
 ```bash
 docker network ls
 ```
 
-Ищите сеть вроде `datalens_default` (имя = `{каталог-проекта}_default`). Запишите его в `.env` как `DATALENS_NETWORK`. Если сеть другая, а в `.env` оставить дефолт — контейнеры не увидят `us` / `auth`.
+Имя сети запишите в `DATALENS_NETWORK`. Часто это `datalens_default`. Если имя другое, а в `.env` оставлен образец, контейнер не резолвит `us`.
 
-## 2. Секреты
+## Токены и логин
 
-Из `.env` каталога DataLens перенесите:
+Из `.env` вашего DataLens:
 
-| Переменная | Откуда |
-|---|---|
-| `US_MASTER_TOKEN` | тот же токен, что у сервиса `us` / `control-api` |
-| `AUTH_LOGIN` / `AUTH_PASSWORD` | сервис `auth` (часто `admin` / `admin` на свежей установке) |
+- `US_MASTER_TOKEN` — master-token сервиса `us` (тот же, что у control-api).
+- `AUTH_LOGIN` и `AUTH_PASSWORD` — учётка сервиса `auth`. На свежей установке часто `admin` / `admin`.
 
-Задайте сами (не берите из примеров):
-
-| Переменная | Смысл |
-|---|---|
-| `DL_API_TOKEN` | Bearer для клиентов `datalens-api` |
-| `MCP_AUTH_TOKEN` | Bearer для MCP-клиентов; **другая** строка, не копия `DL_API_TOKEN` |
+`DL_API_TOKEN` и `MCP_AUTH_TOKEN` задайте сами, разными строками. Образец в `env.example` — `change-me`, его в работе не оставляйте.
 
 ```bash
 cp env.example .env
-# отредактировать .env
 docker compose up -d --build
 ```
 
-## 3. Проверка
+Команда без профилей поднимает только API и MCP. Ядро и прокси UI не стартуют и порт UI не занимают.
+
+## Проверка
 
 ```bash
-curl -sS "http://127.0.0.1:8393/health"
-# {"status":"ok"}
-
-curl -sS "http://127.0.0.1:8394/health"
-# {"status":"ok"}
-
-curl -X POST "http://127.0.0.1:8393/rpc/getWorkbooksList" \
-  -H "Authorization: Bearer ${DL_API_TOKEN}" \
-  -H "x-dl-api-version: 2" \
-  -H "Content-Type: application/json" \
-  -d '{"page":0,"pageSize":10}'
+curl -sS http://127.0.0.1:8393/health
+curl -sS http://127.0.0.1:8394/health
 ```
 
-401 — неверный `DL_API_TOKEN`. Пустой/ошибка соединения с `us` — не та docker-сеть или DataLens не запущен.
+Порты по умолчанию: `DATALENS_API_PORT=8393`, `DATALENS_MCP_PORT=8394`.
 
-## 4. Cursor
+## MCP
 
-```json
-{
-  "mcpServers": {
-    "datalens-oss": {
-      "url": "http://127.0.0.1:8394/mcp",
-      "headers": {
-        "Authorization": "Bearer ${env:MCP_AUTH_TOKEN}"
-      }
-    }
-  }
-}
-```
+URL: `http://127.0.0.1:8394/mcp`
 
-Если DataLens на другой машине — подставьте её хост вместо `127.0.0.1`, порт MCP не открывайте в интернет без firewall (см. [security.md](security.md)).
+Заголовок: `Authorization: Bearer <MCP_AUTH_TOKEN>`
+
+Транспорт — Streamable HTTP, `POST /mcp`.

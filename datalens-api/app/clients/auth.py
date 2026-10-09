@@ -1,13 +1,23 @@
 from __future__ import annotations
 
+import base64
 import json
-from typing import Any
+import time
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 from urllib.parse import unquote
 
 import httpx
 
 from app.config import get_settings
 from app.errors import ApiError, raise_from_us
+
+T = TypeVar("T")
+
+_EXPIRY_MARGIN_SEC = 60
+_FALLBACK_TTL_SEC = 60
+_cached_token: str | None = None
+_cached_until: float = 0.0
 
 
 def _token_from_cookie_value(raw: str) -> str | None:
@@ -51,7 +61,22 @@ def _token_from_signin(response: httpx.Response) -> str | None:
     return None
 
 
-async def get_user_access_token() -> str:
+def _jwt_exp(token: str) -> float | None:
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+    payload = parts[1] + "=" * (-len(parts[1]) % 4)
+    try:
+        data = json.loads(base64.urlsafe_b64decode(payload))
+    except ValueError:
+        return None
+    exp = data.get("exp") if isinstance(data, dict) else None
+    if isinstance(exp, bool) or not isinstance(exp, (int, float)):
+        return None
+    return float(exp)
+
+
+async def _signin() -> str:
     settings = get_settings()
     url = f"{settings.auth_host.rstrip('/')}/signin"
     try:
@@ -72,3 +97,36 @@ async def get_user_access_token() -> str:
     if not token:
         raise ApiError(401, "UNAUTHENTICATED", "Auth signin did not return accessToken")
     return token
+
+
+async def get_user_access_token() -> str:
+    global _cached_token, _cached_until
+    now = time.time()
+    if _cached_token and now < _cached_until:
+        return _cached_token
+    token = await _signin()
+    exp = _jwt_exp(token)
+    _cached_token = token
+    _cached_until = exp - _EXPIRY_MARGIN_SEC if exp else now + _FALLBACK_TTL_SEC
+    return token
+
+
+def invalidate_user_access_token() -> None:
+    global _cached_token, _cached_until
+    _cached_token = None
+    _cached_until = 0.0
+
+
+async def refresh_user_access_token() -> str:
+    invalidate_user_access_token()
+    return await get_user_access_token()
+
+
+async def with_token_retry(call: Callable[[str], Awaitable[T]]) -> T:
+    token = await get_user_access_token()
+    try:
+        return await call(token)
+    except ApiError as exc:
+        if exc.status_code != 401:
+            raise
+    return await call(await refresh_user_access_token())

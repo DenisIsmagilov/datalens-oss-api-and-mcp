@@ -1,0 +1,15 @@
+server {
+    listen 8080;
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $ui_upstream ${DATALENS_UI_UPSTREAM};
+
+    location / {
+        proxy_pass $ui_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header Accept-Encoding "";
+        gunzip on;
+        sub_filter_once on;
+        sub_filter_types text/html;
+        sub_filter '</head>' '<script>window.__DATALENS_NEURO_ORIGIN=${NEURO_PUBLIC_ORIGIN_JSON};</script><script src="${NEURO_PUBLIC_ORIGIN}/ui/loader.js" async></script></head>';
+    }
+}

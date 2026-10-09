@@ -390,3 +390,52 @@ def test_update_dataset_sends_workbook_id():
     )
     assert response.status_code == 200, response.text
     assert route.calls[0].request.url.params["workbook_id"] == "wb123wb123wb"
+
+
+FIELD_URL = f"{DATASET_DRAFT_URL}/validators/field"
+
+
+@respx.mock
+def test_validate_dataset_formula_200():
+    _mock_signin()
+    route = respx.post(FIELD_URL).mock(
+        return_value=httpx.Response(200, json={"field": {"valid": True, "formula": "SUM([Выручка])"}})
+    )
+    response = _rpc("validateDatasetFormula", {"datasetId": DS_ID, "formula": "SUM([Выручка])"})
+    assert response.status_code == 200, response.text
+    assert response.json() == {"valid": True}
+    sent = route.calls[0].request
+    assert sent.method == "POST"
+    assert json.loads(sent.content) == {
+        "field": {"title": "formula", "calc_mode": "formula", "formula": "SUM([Выручка])"}
+    }
+    assert all(call.request.method != "PUT" for call in respx.calls)
+
+
+@respx.mock
+def test_validate_dataset_formula_400_maps_invalid_argument():
+    _mock_signin()
+    respx.post(FIELD_URL).mock(
+        return_value=httpx.Response(400, json={"message": "неизвестное поле"})
+    )
+    response = _rpc("validateDatasetFormula", {"datasetId": DS_ID, "formula": "SUM([Нет])"})
+    assert response.status_code == 400
+    assert response.json()["code"] == "INVALID_ARGUMENT"
+    assert "неизвестное поле" in response.json()["message"]
+
+
+@respx.mock
+def test_validate_dataset_formula_200_valid_false_is_400():
+    _mock_signin()
+    respx.post(FIELD_URL).mock(
+        return_value=httpx.Response(200, json={"field": {"valid": False, "formula": "1+"}})
+    )
+    response = _rpc("validateDatasetFormula", {"datasetId": DS_ID, "formula": "1+"})
+    assert response.status_code == 400
+    assert response.json()["code"] == "INVALID_ARGUMENT"
+
+
+def test_validate_dataset_formula_rejects_db_call_without_http():
+    response = _rpc("validateDatasetFormula", {"datasetId": DS_ID, "formula": "DB_CALL_INT('x', [Город])"})
+    assert response.status_code == 400
+    assert "DB_CALL" in response.json()["message"]

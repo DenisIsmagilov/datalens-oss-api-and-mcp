@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     datalens_api_host: str = "http://datalens-api:8393"
     datalens_mcp_port: int = 8394
     datalens_api_version: str = "2"
+    datalens_api_timeout_sec: float = 90.0
 
 
 @lru_cache

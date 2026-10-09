@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GetConnectionArgs(BaseModel):
@@ -41,6 +43,16 @@ class ValidateDatasetArgs(BaseModel):
     workbookId: str | None = None
     bindedDatasetId: str | None = None
     data: dict | None = None
+
+
+class ValidateDatasetFormulaArgs(BaseModel):
+    datasetId: str
+    formula: str = Field(min_length=1, max_length=5000)
+
+
+class ValidateDatasetFormulaResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    valid: Literal[True] = True
 
 
 class EmptyResult(BaseModel):

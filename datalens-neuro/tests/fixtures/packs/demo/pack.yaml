@@ -1,0 +1,6 @@
+name: demo
+title: Demo
+workbookIds: [wb-demo]
+prompt: prompt.md
+glossary: glossary.yaml
+catalog: catalog.json

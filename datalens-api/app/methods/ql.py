@@ -4,6 +4,7 @@ from app.adapters.chart import entry_to_chart
 from app.adapters.common import dump_model
 from app.auth import AuthContext
 from app.clients.us import get_us_client
+from app.us_entries import create_and_publish_entry
 from app.models.generated import (
     CreateQLChartArgs,
     DeleteQLChartArgs,
@@ -53,9 +54,7 @@ def _get_us_params(payload: dict) -> dict[str, Any]:
 
 
 async def create_ql_chart(args: CreateQLChartArgs, _ctx: AuthContext) -> ChartResult:
-    raw = await _us_private(
-        "POST", "/private/entries", json=_location_payload(dump_model(args))
-    )
+    raw = await create_and_publish_entry(_location_payload(dump_model(args)))
     return ChartResult.model_validate(entry_to_chart(raw))
 
 

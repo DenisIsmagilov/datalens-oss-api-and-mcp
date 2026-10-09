@@ -4,6 +4,7 @@ from app.adapters.common import dump_model
 from app.adapters.dashboard import dashboard_result
 from app.auth import AuthContext
 from app.clients.us import get_us_client
+from app.us_entries import create_and_publish_entry
 from app.models.generated import (
     CreateDashboardV1Args,
     DeleteDashboardArgs,
@@ -68,7 +69,7 @@ async def create_dashboard(
     args: CreateDashboardV1Args, _ctx: AuthContext
 ) -> GetDashboardV1Result:
     entry = dump_model(args)["entry"]
-    raw = await _us_private("POST", "/private/entries", json=_create_us_payload(entry))
+    raw = await create_and_publish_entry(_create_us_payload(entry))
     return GetDashboardV1Result.model_validate(dashboard_result(raw))
 
 

@@ -20,7 +20,7 @@ def _load_env_file(path: Path) -> None:
 _load_env_file(_REPO_ROOT / ".env.test")
 _load_env_file(_REPO_ROOT / ".env.local")
 os.environ.setdefault("DATALENS_API_BASE", "http://127.0.0.1:8393")
-os.environ.setdefault("DL_API_TOKEN", "local-dl-api-token")
+os.environ.setdefault("DL_API_TOKEN", "test-dl-api-token")
 
 
 @pytest.fixture(autouse=True)

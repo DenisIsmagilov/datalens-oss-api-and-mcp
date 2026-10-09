@@ -11,8 +11,7 @@ from app.adapters.collection import (
 )
 from app.adapters.common import dump_model
 from app.auth import AuthContext
-from app.clients.auth import get_user_access_token
-from app.clients.us import get_us_client
+from app.clients.us import get_us_client, us_public_request
 from app.models.generated import (
     Collection,
     CreateCollectionArgs,
@@ -71,14 +70,7 @@ async def _us_public(
     params: dict | None = None,
     json: Any = None,
 ) -> Any:
-    token = await get_user_access_token()
-    return await get_us_client().request(
-        method,
-        path,
-        params=params,
-        json=json,
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    return await us_public_request(method, path, params=params, json=json)
 
 
 async def create_collection(
