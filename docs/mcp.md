@@ -38,3 +38,5 @@
 - `query_dataset`
 - `get_dataset_field_values`
 - `get_chart_data`
+
+`get_dashboard` отдаёт `source` селектора целиком. Публикация через `call_rpc` → `updateDashboard` записывает те же поля, в том числе `elementType` и явный `impactTabsIds: null`. MCP тело не режет.

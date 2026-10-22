@@ -70,6 +70,10 @@
 - `getDatasetFieldValues`
 - `getChartData`
 
+## Дашборд
+
+`getDashboard` возвращает `source` селектора целиком: `elementType` и остальные поля, которые лежали в United Storage, включая ключи вне облачного списка. `updateDashboard` и `createDashboard` записывают их обратно. Явный `impactTabsIds: null` остаётся в теле; ключ, которого во входе не было, не добавляется. У группы сохраняется `impactType=asGroup`.
+
 ## Примеры
 
 Оба вызова — методы чтения из списка выше. В теле нет секретов: `workbookId` замените на свой.

@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.adapters.common import dump_model
+from app.adapters.common import dump_dashboard_model, dump_model
 from app.adapters.dashboard import dashboard_result
 from app.auth import AuthContext
 from app.clients.us import get_us_client
@@ -68,7 +68,7 @@ def _update_us_payload(payload: dict) -> dict:
 async def create_dashboard(
     args: CreateDashboardV1Args, _ctx: AuthContext
 ) -> GetDashboardV1Result:
-    entry = dump_model(args)["entry"]
+    entry = dump_dashboard_model(args)["entry"]
     raw = await create_and_publish_entry(_create_us_payload(entry))
     return GetDashboardV1Result.model_validate(dashboard_result(raw))
 
@@ -89,7 +89,7 @@ async def get_dashboard(
 async def update_dashboard(
     args: UpdateDashboardV1Args, _ctx: AuthContext
 ) -> GetDashboardV1Result:
-    payload = dump_model(args)
+    payload = dump_dashboard_model(args)
     entry_id = payload["entry"]["entryId"]
     raw = await _us_private(
         "POST",

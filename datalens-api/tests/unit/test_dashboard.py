@@ -338,7 +338,9 @@ def test_get_dashboard_fills_group_control_show_group_name():
     item = response.json()["entry"]["data"]["tabs"][0]["items"][0]
     assert item["type"] == "group_control"
     assert item["data"]["showGroupName"] is False
-    assert item["data"].get("impactType") != "asGroup"
+    assert item["data"]["impactType"] == "asGroup"
+    assert item["data"]["impactTabsIds"] is None
+    assert item["data"]["group"][0]["source"]["elementType"] == "select"
     from app.models.generated import GetDashboardV1Result
 
     GetDashboardV1Result.model_validate(response.json())
@@ -431,6 +433,144 @@ def test_delete_dashboard_returns_empty_object():
     assert response.status_code == 200, response.text
     assert response.json() == {}
     assert route.called
+
+
+def _selector_group() -> dict:
+    return {
+        "id": "g1",
+        "namespace": "default",
+        "type": "group_control",
+        "data": {
+            "autoHeight": True,
+            "buttonApply": False,
+            "buttonReset": True,
+            "showGroupName": True,
+            "impactType": "asGroup",
+            "impactTabsIds": None,
+            "group": [
+                {
+                    "id": "c-ds",
+                    "title": "Dataset",
+                    "namespace": "default",
+                    "sourceType": "dataset",
+                    "impactType": "asGroup",
+                    "impactTabsIds": None,
+                    "source": {
+                        "datasetId": "ds1ds1ds1ds1d",
+                        "datasetFieldId": "f1",
+                        "elementType": "select",
+                        "showTitle": True,
+                        "defaultValue": ["a"],
+                        "multiselectable": True,
+                        "showHint": None,
+                        "pluginFlag": "keep",
+                    },
+                },
+                {
+                    "id": "c-man",
+                    "title": "Manual",
+                    "namespace": "default",
+                    "sourceType": "manual",
+                    "impactType": "asGroup",
+                    "impactTabsIds": None,
+                    "source": {
+                        "fieldName": "week",
+                        "elementType": "date",
+                        "isRange": True,
+                    },
+                },
+                {
+                    "id": "c-bare",
+                    "title": "Bare",
+                    "namespace": "default",
+                    "sourceType": "dataset",
+                    "source": {
+                        "datasetId": "ds1ds1ds1ds1d",
+                        "datasetFieldId": "f2",
+                        "elementType": "input",
+                    },
+                },
+            ],
+        },
+    }
+
+
+def _us_with_selectors() -> dict:
+    return {
+        **US_GET,
+        "data": {
+            **US_GET["data"],
+            "tabs": [
+                {
+                    "id": "t1",
+                    "title": "Tab",
+                    "items": [_selector_group()],
+                    "layout": [],
+                    "aliases": {},
+                }
+            ],
+        },
+    }
+
+
+@respx.mock
+def test_dashboard_selector_roundtrip_keeps_source_and_null_impact():
+    respx.get(f"{US_HOST}/private/entries/{DASH_ID}").mock(
+        return_value=httpx.Response(200, json=_us_with_selectors())
+    )
+    update_route = respx.post(f"{US_HOST}/private/entries/{DASH_ID}").mock(
+        return_value=httpx.Response(200, json=US_GET)
+    )
+    got = _rpc("getDashboard", {"dashboardId": DASH_ID})
+    assert got.status_code == 200, got.text
+    group = got.json()["entry"]["data"]["tabs"][0]["items"][0]["data"]
+    assert group["impactType"] == "asGroup"
+    assert group["impactTabsIds"] is None
+    dataset, manual, bare = group["group"]
+    assert dataset["source"]["elementType"] == "select"
+    assert dataset["source"]["showTitle"] is True
+    assert dataset["source"]["defaultValue"] == ["a"]
+    assert dataset["source"]["multiselectable"] is True
+    assert dataset["source"]["showHint"] is None
+    assert dataset["source"]["pluginFlag"] == "keep"
+    assert dataset["impactTabsIds"] is None
+    assert manual["source"]["elementType"] == "date"
+    assert manual["source"]["isRange"] is True
+    assert manual["source"]["fieldName"] == "week"
+    assert "impactTabsIds" not in bare
+    assert "impactType" not in bare
+
+    updated = _rpc(
+        "updateDashboard",
+        {
+            "entry": {
+                "entryId": DASH_ID,
+                "data": got.json()["entry"]["data"],
+                "meta": got.json()["entry"].get("meta"),
+            },
+            "mode": "publish",
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    sent = json.loads(update_route.calls[0].request.content)
+    posted = sent["data"]["tabs"][0]["items"][0]["data"]
+    assert sent["mode"] == "publish"
+    assert posted["impactType"] == "asGroup"
+    assert posted["impactTabsIds"] is None
+    posted_dataset, posted_manual, posted_bare = posted["group"]
+    assert posted_dataset["source"]["elementType"] == "select"
+    assert posted_dataset["source"]["showTitle"] is True
+    assert posted_dataset["source"]["defaultValue"] == ["a"]
+    assert posted_dataset["source"]["multiselectable"] is True
+    assert posted_dataset["source"]["showHint"] is None
+    assert posted_dataset["source"]["pluginFlag"] == "keep"
+    assert posted_dataset["impactType"] == "asGroup"
+    assert posted_dataset["impactTabsIds"] is None
+    assert posted_manual["source"]["elementType"] == "date"
+    assert posted_manual["source"]["isRange"] is True
+    assert posted_manual["impactTabsIds"] is None
+    assert "impactTabsIds" not in posted_bare
+    assert "impactType" not in posted_bare
 
 
 def test_json_lists_dashboard_methods():

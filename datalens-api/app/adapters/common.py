@@ -19,6 +19,42 @@ def dump_model(model: Any) -> dict[str, Any]:
     return model.model_dump(by_alias=True, exclude_none=True, mode="json")
 
 
+def dump_dashboard_model(model: Any) -> dict[str, Any]:
+    """Dump a dashboard payload, keeping selector nulls United Storage needs.
+
+    ``exclude_none`` stays in effect for the rest of the body. An explicit
+    ``impactTabsIds: null`` and any explicit null inside ``source`` are kept.
+    A key that was absent on input is not added.
+    """
+    raw = model.model_dump(by_alias=True, exclude_unset=True, mode="json")
+    return _strip_nulls_except_selector_state(raw)
+
+
+def _strip_nulls_except_selector_state(node: Any, *, in_source: bool = False) -> Any:
+    if isinstance(node, list):
+        return [
+            _strip_nulls_except_selector_state(item, in_source=in_source) for item in node
+        ]
+    if not isinstance(node, dict):
+        return node
+    kept: dict[str, Any] = {}
+    for key, value in node.items():
+        if key == "source" and isinstance(value, dict):
+            kept[key] = _strip_nulls_except_selector_state(value, in_source=True)
+            continue
+        if isinstance(value, dict):
+            value = _strip_nulls_except_selector_state(value, in_source=in_source)
+        elif isinstance(value, list):
+            value = [
+                _strip_nulls_except_selector_state(item, in_source=in_source)
+                for item in value
+            ]
+        if value is None and not in_source and key != "impactTabsIds":
+            continue
+        kept[key] = value
+    return kept
+
+
 def _iso_to_unix_seconds(value: Any) -> str | None:
     if not isinstance(value, str) or not value:
         return None

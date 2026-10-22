@@ -680,6 +680,39 @@ class DatasetFieldType(Enum):
 
 
 class DashControlSourceDataset(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    required: Any | None = Field(
+        None, description='Whether the control value is required.'
+    )
+    showHint: Any | None = Field(None, description='Whether to show the control hint.')
+    showTitle: Any | None = Field(
+        None, description='Whether to show the control title.'
+    )
+    hint: Any | None = Field(None, description='Control hint text.')
+    accentType: Any | None = Field(None, description='Control accent style.')
+    fieldType: Any | None = Field(
+        None, description='Type of the field used by the control.'
+    )
+    innerTitle: Any | None = Field(
+        None, description='Title displayed inside the control.'
+    )
+    showInnerTitle: Any | None = Field(
+        None, description='Whether to show the title inside the control.'
+    )
+    operation: Any | None = Field(None, description='Filtering operation.')
+    titlePlacement: Any | None = Field(None, description='Control title placement.')
+    multiselectable: Any | None = Field(
+        None, description='Whether multiple values can be selected.'
+    )
+    elementType: Any | None = Field(None, description='Control element type.')
+    defaultValue: Any | None = Field(
+        None, description='Default selected value or values.'
+    )
+    isRange: Any | None = Field(
+        None, description='Whether the control selects a date range.'
+    )
     datasetId: constr(min_length=1) = Field(
         ..., description='Source dataset identifier.'
     )
@@ -704,6 +737,39 @@ class AcceptableValues(BaseModel):
 
 
 class DashControlSourceManual(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    required: Any | None = Field(
+        None, description='Whether the control value is required.'
+    )
+    showHint: Any | None = Field(None, description='Whether to show the control hint.')
+    showTitle: Any | None = Field(
+        None, description='Whether to show the control title.'
+    )
+    hint: Any | None = Field(None, description='Control hint text.')
+    accentType: Any | None = Field(None, description='Control accent style.')
+    fieldType: Any | None = Field(
+        None, description='Type of the field used by the control.'
+    )
+    innerTitle: Any | None = Field(
+        None, description='Title displayed inside the control.'
+    )
+    showInnerTitle: Any | None = Field(
+        None, description='Whether to show the title inside the control.'
+    )
+    operation: Any | None = Field(None, description='Filtering operation.')
+    titlePlacement: Any | None = Field(None, description='Control title placement.')
+    multiselectable: Any | None = Field(
+        None, description='Whether multiple values can be selected.'
+    )
+    elementType: Any | None = Field(None, description='Control element type.')
+    defaultValue: Any | None = Field(
+        None, description='Default selected value or values.'
+    )
+    isRange: Any | None = Field(
+        None, description='Whether the control selects a date range.'
+    )
     fieldName: constr(min_length=1) = Field(
         ..., description='Parameter name for the manual control.'
     )
@@ -886,12 +952,6 @@ class DashGroupControlItem2(BaseModel):
     source: DashControlSourceManual
 
 
-class ImpactType5(Enum):
-    allTabs = 'allTabs'
-    currentTab = 'currentTab'
-    selectedTabs = 'selectedTabs'
-
-
 class DashGroupControl(BaseModel):
     autoHeight: bool = Field(
         ..., description='Whether to adjust the group height to its content.'
@@ -902,7 +962,7 @@ class DashGroupControl(BaseModel):
         ..., description='Whether to show the control group name.'
     )
     groupName: str | None = Field(None, description='Control group name.')
-    impactType: ImpactType5 | None = Field(
+    impactType: ImpactType | None = Field(
         None, description='Tabs affected by the control group.'
     )
     impactTabsIds: list[str] | None = Field(

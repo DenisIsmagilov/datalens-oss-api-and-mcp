@@ -55,7 +55,7 @@ _GROUP_CONTROL_BOOLS = (
     "buttonReset",
     "showGroupName",
 )
-_GROUP_IMPACT_CLOUD = frozenset({"allTabs", "currentTab", "selectedTabs"})
+_GROUP_IMPACT_TYPES = frozenset({"allTabs", "currentTab", "selectedTabs", "asGroup"})
 
 _DATA_KEYS = (
     "counter",
@@ -105,7 +105,7 @@ def _adapt_group_control_data(raw: Any) -> dict:
     for key in _GROUP_CONTROL_BOOLS:
         if key not in data:
             data[key] = False
-    if data.get("impactType") not in _GROUP_IMPACT_CLOUD:
+    if data.get("impactType") not in _GROUP_IMPACT_TYPES:
         data.pop("impactType", None)
     if "group" not in data:
         data["group"] = []
